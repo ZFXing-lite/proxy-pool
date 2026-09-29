@@ -1,0 +1,117 @@
+# ProxyPool
+
+🚀 **多源公开代理 IP 池** — 自动从 10+ 公开数据源抓取、验证、缓存免费代理 IP，提供 API 服务和 Python SDK，可被任意项目一行接入。
+
+## 特性
+
+- **多源抓取**: GitHub 公开仓库 (monosans, proxifly, TheSpeedX, clarketm, jetkai, roxkso) + 公开 API (ProxyScrape, Geonode)
+- **多协议支持**: HTTP / HTTPS / SOCKS4 / SOCKS5
+- **自动验证**: 异步并发检测代理可用性，记录响应时间
+- **智能缓存**: 本地 SQLite 缓存，TTL 过期自动刷新
+- **轮询负载**: 内置 round-robin / random / 最快优先 策略
+- **API 服务**: FastAPI 提供 RESTful 接口，支持过滤/分页
+- **Python SDK**: `from proxy_pool import ProxyPool` 一行接入
+- **CLI 工具**: 命令行抓取、验证、导出
+
+## 快速开始
+
+### 安装
+
+```bash
+pip install -e .
+```
+
+### Python SDK
+
+```python
+from proxy_pool import ProxyPool
+
+pool = ProxyPool()
+
+# 获取一个可用代理
+proxy = pool.get_proxy(protocol="http")
+print(proxy)  # {"ip": "1.2.3.4", "port": 8080, "protocol": "http", "latency": 0.5}
+
+# 获取多个
+proxies = pool.get_proxies(count=10, protocol="socks5")
+
+# 直接用于 requests
+import requests
+proxy = pool.get_proxy()
+r = requests.get("http://httpbin.org/ip", proxies={"http": f"http://{proxy['ip']}:{proxy['port']}"})
+```
+
+### API 服务
+
+```bash
+proxy-pool serve --host 0.0.0.0 --port 8000
+```
+
+```bash
+# 获取代理
+curl http://localhost:8000/api/proxy?protocol=http
+
+# 批量获取
+curl http://localhost:8000/api/proxies?count=10&protocol=socks5
+
+# 刷新池
+curl -X POST http://localhost:8000/api/refresh
+```
+
+### CLI
+
+```bash
+# 抓取并验证
+proxy-pool fetch --validate
+
+# 导出为文件
+proxy-pool export --format txt -o proxies.txt
+
+# 查看统计
+proxy-pool stats
+```
+
+## 数据源
+
+| 来源 | 类型 | 更新频率 | 协议 |
+|------|------|----------|------|
+| [monosans/proxy-list](https://github.com/monosans/proxy-list) | GitHub Raw | 每小时 | HTTP, SOCKS4, SOCKS5 |
+| [proxifly/free-proxy-list](https://github.com/proxifly/free-proxy-list) | GitHub Raw | 每5分钟 | HTTP, SOCKS4, SOCKS5 |
+| [TheSpeedX/PROXY-List](https://github.com/TheSpeedX/PROXY-List) | GitHub Raw | 每天 | HTTP, SOCKS4, SOCKS5 |
+| [clarketm/proxy-list](https://github.com/clarketm/proxy-list) | GitHub Raw | 每天 | HTTP, HTTPS |
+| [jetkai/proxy-list](https://github.com/jetkai/proxy-list) | GitHub Raw | 每小时 | HTTP, SOCKS4, SOCKS5 |
+| [roxkso/free-proxy-list](https://github.com/roxkso/free-proxy-list) | GitHub Raw | 每天 | HTTP, SOCKS5 |
+| [ProxyScrape API](https://proxyscrape.com) | REST API | 每分钟 | HTTP, SOCKS4, SOCKS5 |
+| [Geonode API](https://geonode.com) | REST API | 24小时 | HTTP, SOCKS4, SOCKS5 |
+
+## 接入其他项目
+
+### 方式1: pip install (推荐)
+
+```bash
+pip install git+https://github.com/ZFXing-lite/proxy-pool.git
+```
+
+```python
+from proxy_pool import ProxyPool
+pool = ProxyPool()
+proxy = pool.get_proxy()
+```
+
+### 方式2: git submodule
+
+```bash
+git submodule add https://github.com/ZFXing-lite/proxy-pool.git vendor/proxy-pool
+pip install -e vendor/proxy-pool
+```
+
+## ⚠️ 免责声明
+
+- 这些是公开免费代理，不稳定且可能记录流量
+- **切勿** 通过免费代理发送敏感数据/凭据/Token
+- 仅用于 HTTPS 场景，避免明文传输
+- 代理随时可能失效，请做好重试机制
+
+## License
+
+MIT
